@@ -238,11 +238,92 @@ describe('anonymous role', () => {
 
 // authenticated role
 describe('user role', () => {
+  test('should be allowed to read public board by getBoard query', async() => {
+    // TODO
+  });
+
+  test('should not be allowed to read foreign private board by getBoard query', async() => {
+    // TODO
+  });
+
+  test('should be able to create new boards. Private by default', async() => {
+
+    let name = 'My new board';
+
+    let query = `mutation {
+      createBoard(input: { name: "${name}" }) {
+        board {
+          id
+          name
+          userId
+          isPrivate
+        }
+        errors {
+          message
+          code
+        }
+      }
+    }`;
+
+    let res = await request(Spikenail.server)
+      .post('/graphql')
+      .set('authorization', 'Bearer ' + data.users[0].tokens[0].token)
+      .send({ query: query })
+      .expect('Content-Type', /json/)
+      .expect(200);
+
+    let result = JSON.parse(res.text);
+
+    expect(result.data.createBoard.board.id).toBeTruthy();
+    expect(result.data.createBoard.board.userId).toBeTruthy();
+    expect(result.data.createBoard.board.name).toBe(name);
+    expect(result.data.createBoard.board.isPrivate).toBe(true);
+  });
+
+  test('should be able to create lists', async () => {
+    // TODO
+  });
+
+  test('should be able to create cards', async () => {
+    // TODO
+  });
+
+  // Should not be able to edit foreign items
+
+  // Should not be able to delete foreign items
+
   // TODO
 });
 
 describe('board owner', () => {
-  // TODO
+  test('should be able to read private board he owns', async () => {
+    let id = toGlobalId('board', data.boards[0]['_id'].toString());
+
+    let query = `{
+      getBoard(id: "${id}") {
+        id
+        userId
+        name
+      }
+    }`;
+
+    let res = await request(Spikenail.server)
+      .post('/graphql')
+      .set('authorization', 'Bearer ' + data.users[0].tokens[0].token)
+      .send({ query: query })
+      .expect('Content-Type', /json/)
+      .expect(200);
+
+    let result = JSON.parse(res.text);
+
+    expect(result.data.getBoard.id).toBe(id);
+    expect(result.data.getBoard.userId).toBe(toGlobalId('user', data.users[0]._id.toString()));
+  });
+
+  // Should be able to delete the board he owns
+
+  // Should be able to update the board he owns
+
 });
 
 describe('board member', () => {

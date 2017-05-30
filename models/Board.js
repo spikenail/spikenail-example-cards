@@ -32,8 +32,8 @@ export default new Board({
     allow: false
   }, {
     allow: true,
-    actions: ['create'],
-    roles: ['user']
+    actions: 'create',
+    roles: 'user'
   }, {
     allow: true,
     roles: 'owner',
