@@ -76,6 +76,59 @@ beforeAll(async () => {
   return await Spikenail.start();
 });
 
+/**
+ * Get X
+ * Expect success result and returns data
+ *
+ * @param name
+ * @param id
+ * @param token
+ * @returns {Promise.<void>}
+ */
+async function getXQuery(name, id, token = '') {
+  let query = `{
+    get${capitalizeFirstLetter(name)}(id: "${id}") {
+      id
+      userId
+    }
+  }`;
+
+  // TODO: don't put token in header if not specified
+  let res = await request(Spikenail.server)
+    .post('/graphql')
+    .set('authorization', `Bearer ${token}`)
+    .send({ query: query })
+    .expect('Content-Type', /json/)
+    .expect(200);
+
+  return JSON.parse(res.text);
+}
+
+/**
+ * Read board
+ *
+ * @param board
+ * @param user
+ * @returns {Promise.<void>}
+ */
+async function readBoard(board, user) {
+  let id = toGlobalId('board', board._id.toString());
+  return await getXQuery('board', id, user.tokens[0].token);
+}
+
+/**
+ * User should be able to read board
+ *
+ * @param board
+ * @param user
+ * @returns {Promise.<void>}
+ */
+async function shouldReadBoard(board, user) {
+  let result = await readBoard(board, user);
+
+  expect(result.data.getBoard.id).toBe(toGlobalId('board', board._id));
+}
+
 test('should respond on __schema query', async () => {
 
   let query = `{
@@ -99,6 +152,7 @@ test('should respond on __schema query', async () => {
 function capitalizeFirstLetter(string) {
   return string.charAt(0).toUpperCase() + string.slice(1);
 }
+
 
 /**
  * Test mutation access error
@@ -238,15 +292,18 @@ describe('anonymous role', () => {
 
 // authenticated role
 describe('user role', () => {
-  test('should be allowed to read public board by getBoard query', async() => {
-    // TODO
+
+  test('should be allowed to read public board by getBoard query', async () => {
+    expect(data.boards[3].isPrivate).toBe(false);
+    await shouldReadBoard(data.boards[3], data.users[0]);
   });
 
-  test('should not be allowed to read foreign private board by getBoard query', async() => {
-    // TODO
+  test('should not be allowed to read foreign private board by getBoard query', async () => {
+    expect(data.boards[2].isPrivate).toBe(true);
+    await shouldReadBoard(data.boards[2], data.users[0]);
   });
 
-  test('should be able to create new boards. Private by default', async() => {
+  test('should be able to create new boards. Private by default', async () => {
 
     let name = 'My new board';
 
@@ -295,6 +352,19 @@ describe('user role', () => {
   // TODO
 });
 
+/**
+ * User should not be able to read board
+ *
+ * @param board
+ * @param user
+ * @returns {Promise.<void>}
+ */
+async function shouldNotReadBoard(board, user) {
+  let result = await readBoard(board, user);
+
+  expect(result.data.getBoard).toBeNull();
+}
+
 describe('board owner', () => {
   test('should be able to read private board he owns', async () => {
     let id = toGlobalId('board', data.boards[0]['_id'].toString());
@@ -334,35 +404,6 @@ describe('board owner', () => {
 
 });
 
-
-/**
- * Get X
- * Expect success result and returns data
- *
- * @param name
- * @param id
- * @param token
- * @returns {Promise.<void>}
- */
-async function getXQuery(name, id, token = '') {
-  let query = `{
-    get${capitalizeFirstLetter(name)}(id: "${id}") {
-      id
-      userId
-    }
-  }`;
-
-  // TODO: don't put token in header if not specified
-  let res = await request(Spikenail.server)
-    .post('/graphql')
-    .set('authorization', `Bearer ${token}`)
-    .send({ query: query })
-    .expect('Content-Type', /json/)
-    .expect(200);
-
-  return JSON.parse(res.text);
-}
-
 describe('board member', () => {
   test('should be able to read private board he is added to as a member', async () => {
 
@@ -395,5 +436,7 @@ describe('board observer', () => {
     expect(result.data.getBoard.id).toBe(id);
     expect(result.data.getBoard.userId).toBe(toGlobalId('user', data.users[0]._id.toString()));
   });
+
+  // should not be able to edit private board he is added to as a observer
 
 });
