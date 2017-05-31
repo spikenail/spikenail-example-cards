@@ -324,12 +324,76 @@ describe('board owner', () => {
 
   // Should be able to update the board he owns
 
+  // Should be able to create, update, delete lists for his own board
+
+  // Should not be able to create lists for foreign board
+
+  // Should be able to create cards for his own board
+
+  // Should not be able to create cards for foreign board
+
 });
 
+
+/**
+ * Get X
+ * Expect success result and returns data
+ *
+ * @param name
+ * @param id
+ * @param token
+ * @returns {Promise.<void>}
+ */
+async function getXQuery(name, id, token = '') {
+  let query = `{
+    get${capitalizeFirstLetter(name)}(id: "${id}") {
+      id
+      userId
+    }
+  }`;
+
+  // TODO: don't put token in header if not specified
+  let res = await request(Spikenail.server)
+    .post('/graphql')
+    .set('authorization', `Bearer ${token}`)
+    .send({ query: query })
+    .expect('Content-Type', /json/)
+    .expect(200);
+
+  return JSON.parse(res.text);
+}
+
 describe('board member', () => {
-  // TODO
+  test('should be able to read private board he is added to as a member', async () => {
+
+    let token = data.users[1].tokens[0].token;
+    let id = toGlobalId('board', data.boards[0]._id);
+
+    let result = await getXQuery('board', id, token);
+
+    expect(result.data.getBoard.id).toBe(id);
+    expect(result.data.getBoard.userId).toBe(toGlobalId('user', data.users[0]._id.toString()));
+  });
+
+  // should be able to edit private board?
+
+  // should not be able to delete private board he is added to
+
+  // should be able to create lists for the private board
+
 });
 
 describe('board observer', () => {
-  // TODO
+
+  test('should be able to read private board he is added to as a observer', async () => {
+
+    let token = data.users[2].tokens[0].token;
+    let id = toGlobalId('board', data.boards[0]._id);
+
+    let result = await getXQuery('board', id, token);
+
+    expect(result.data.getBoard.id).toBe(id);
+    expect(result.data.getBoard.userId).toBe(toGlobalId('user', data.users[0]._id.toString()));
+  });
+
 });
