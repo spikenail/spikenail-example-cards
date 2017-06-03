@@ -55,7 +55,7 @@ export default new Board({
           return false;
         }
 
-        return { 'memberships.userId': ctx.currentUser, 'memberships.role': 'member' }
+        return { 'memberships.userId': ctx.currentUser._id, 'memberships.role': 'member' };
       }
     },
     observer: {
@@ -64,7 +64,7 @@ export default new Board({
           return false;
         }
 
-        return {  'memberships.userId': ctx.currentUser, 'memberships.role': 'observer' }
+        return {  'memberships.userId': ctx.currentUser._id, 'memberships.role': 'observer' }
       }
     }
   }

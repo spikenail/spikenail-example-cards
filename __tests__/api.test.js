@@ -1,5 +1,7 @@
 const request = require('supertest');
 
+const stringifyObject = require('stringify-object');
+
 import { Spikenail } from 'spikenail'
 
 import {
@@ -76,6 +78,10 @@ beforeAll(async () => {
   return await Spikenail.start();
 });
 
+function capitalizeFirstLetter(string) {
+  return string.charAt(0).toUpperCase() + string.slice(1);
+}
+
 /**
  * Get X
  * Expect success result and returns data
@@ -92,6 +98,8 @@ async function getXQuery(name, id, token = '') {
       userId
     }
   }`;
+
+  console.log('getXQuery', query, 'token', token);
 
   // TODO: don't put token in header if not specified
   let res = await request(Spikenail.server)
@@ -149,10 +157,94 @@ test('should respond on __schema query', async () => {
   expect(data.data['__schema'].types.length).not.toBe(0);
 });
 
-function capitalizeFirstLetter(string) {
-  return string.charAt(0).toUpperCase() + string.slice(1);
+/**
+ * User should not be able to read board
+ *
+ * @param board
+ * @param user
+ * @returns {Promise.<void>}
+ */
+async function shouldNotReadBoard(board, user) {
+  let result = await readBoard(board, user);
+
+  expect(result.data.getBoard).toBeNull();
 }
 
+/**
+ * TODO
+ */
+function updateX(item, user) {
+  // TODO:
+}
+
+/**
+ * Updates board
+ * TODO: implement updateX
+ *
+ * @param board
+ * @param user
+ * @param input
+ * @returns {Promise.<void>}
+ */
+async function updateBoard(board, user, input) {
+
+  input.id = toGlobalId('board', board._id);
+  let token = user.tokens[0].token;
+
+  let query = `mutation {
+    updateBoard(input: ${stringifyObject(input)}) {
+      board {
+        id
+        userId
+        name
+      }
+      errors {
+        code
+        message
+      }
+    }
+  }`;
+
+  // TODO: don't put token in header if not specified
+  let res = await request(Spikenail.server)
+    .post('/graphql')
+    .set('authorization', `Bearer ${token}`)
+    .send({query: query})
+    .expect('Content-Type', /json/)
+    .expect(200);
+
+  return JSON.parse(res.text);
+}
+
+/**
+ * Should update board
+ *
+ * @param board
+ * @param user
+ */
+async function shouldUpdateBoard(board, user) {
+
+  let name = 'New board name';
+
+  let result = await updateBoard(board, user, { name: name });
+
+  expect(result.updateBoard.board.id).toBe(toGlobalId('board', board._id));
+  expect(result.updateBoard.board.name).toBe(name);
+}
+
+/**
+ * Should not update board
+ *
+ * @param board
+ * @param user
+ * @returns {Promise.<void>}
+ */
+async function shouldNotUpdateBoard(board, user) {
+  let result = await updateBoard(board, user, { name: "New board name" });
+
+  expect(result.data.updateBoard.board).toBe(null);
+  expect(result.data.updateBoard.errors[0].code).toBe("403");
+}
 
 /**
  * Test mutation access error
@@ -298,12 +390,12 @@ describe('user role', () => {
     await shouldReadBoard(data.boards[3], data.users[0]);
   });
 
-  test('should not be allowed to read foreign private board by getBoard query', async () => {
+  test('should NOT be allowed to read foreign private board by getBoard query', async () => {
     expect(data.boards[2].isPrivate).toBe(true);
-    await shouldReadBoard(data.boards[2], data.users[0]);
+    await shouldNotReadBoard(data.boards[2], data.users[0]);
   });
 
-  test('should be able to create new boards. Private by default', async () => {
+  test('should be able to create new boards (private by default)', async () => {
 
     let name = 'My new board';
 
@@ -337,13 +429,23 @@ describe('user role', () => {
     expect(result.data.createBoard.board.isPrivate).toBe(true);
   });
 
-  test('should be able to create lists', async () => {
-    // TODO
+  test('should NOT be able to update foreign public and private boards', async () => {
+    shouldNotUpdateBoard(data.boards[2], data.users[0]);
+    shouldNotUpdateBoard(data.boards[3], data.users[0]);
   });
 
-  test('should be able to create cards', async () => {
-    // TODO
-  });
+  // test('should NOT be able to delete foreign public and private boards', async () => {
+  //   shouldNotDeleteBoard(data.boards[2], data.users[0]);
+  //   shouldNotDeleteBoard(data.boards[3], data.users[0]);
+  // });
+
+  // test('should be able to create lists', async () => {
+  //   // TODO
+  // });
+  //
+  // test('should be able to create cards', async () => {
+  //   // TODO
+  // });
 
   // Should not be able to edit foreign items
 
@@ -352,18 +454,7 @@ describe('user role', () => {
   // TODO
 });
 
-/**
- * User should not be able to read board
- *
- * @param board
- * @param user
- * @returns {Promise.<void>}
- */
-async function shouldNotReadBoard(board, user) {
-  let result = await readBoard(board, user);
 
-  expect(result.data.getBoard).toBeNull();
-}
 
 describe('board owner', () => {
   test('should be able to read private board he owns', async () => {
