@@ -2,6 +2,8 @@ const request = require('supertest');
 
 const stringifyObject = require('stringify-object');
 
+const Query = require('graphql-query-builder');
+
 import { Spikenail } from 'spikenail'
 
 import {
@@ -247,6 +249,112 @@ async function shouldNotUpdateBoard(board, user) {
 }
 
 /**
+ * Run GraphQL query
+ *
+ * @param query
+ * @param user
+ * @returns {Promise.<void>}
+ */
+async function runQuery(query, user) {
+
+  let token = user.tokens[0].token;
+
+  // TODO: don't put token in header if not specified
+  let res = await request(Spikenail.server)
+    .post('/graphql')
+    .set('authorization', `Bearer ${token}`)
+    .send({ query: query })
+    .expect('Content-Type', /json/)
+    .expect(200);
+
+  return JSON.parse(res.text);
+}
+
+/**
+ * Should not remove item X
+ *
+ * @param item
+ * @param name
+ * @param user
+ * @returns {Promise.<void>}
+ */
+async function shouldNotRemoveX(item, name, user) {
+  let query = buildMutationQuery({
+    action: 'remove',
+    name: name,
+    item: item
+  });
+
+  let result = await runQuery(query, user);
+
+  expectAccessError(result);
+}
+
+/**
+ * Should remove item X
+ * @param item
+ * @param name
+ * @param user
+ * @returns {Promise.<void>}
+ */
+async function shouldRemoveX(item, name, user) {
+
+}
+
+/**
+ * Builds mutation query in format required by spikenail framework
+ *
+ * @param args
+ */
+function buildMutationQuery(args) {
+
+  let output = '';
+
+  if (args.action == 'remove') {
+    output = 'removedId';
+  }
+
+  let input = args.input || {};
+
+  if (args.item) {
+    input.id = toGlobalId(args.name, args.item._id);
+  }
+
+  let query = `mutation {
+    ${args.action}${capitalizeFirstLetter(args.name)}(input: ${stringifyObject(input)}) {
+      ${output}
+      errors {
+        code
+        field
+        message
+      }
+    }
+  }`;
+
+  return query;
+}
+
+/**
+ * Expect access error
+ *
+ * @param result
+ */
+function expectAccessError(result) {
+  let errors = result.data[Object.keys(result.data)[0]].errors;
+  expect(errors[0].code).toBe("403");
+}
+
+/**
+ *
+ * @param X
+ * @param user
+ * @returns {Promise.<void>}
+ */
+async function shouldDeleteX(X, user) {
+
+}
+
+/**
  * Test mutation access error
  *
  * @param name
@@ -434,10 +542,10 @@ describe('user role', () => {
     shouldNotUpdateBoard(data.boards[3], data.users[0]);
   });
 
-  // test('should NOT be able to delete foreign public and private boards', async () => {
-  //   shouldNotDeleteBoard(data.boards[2], data.users[0]);
-  //   shouldNotDeleteBoard(data.boards[3], data.users[0]);
-  // });
+  test('should NOT be able to delete foreign public and private boards', async () => {
+    shouldNotRemoveX(data.boards[2], 'board', data.users[0]);
+    shouldNotRemoveX(data.boards[3], 'board', data.users[0]);
+  });
 
   // test('should be able to create lists', async () => {
   //   // TODO
@@ -447,9 +555,9 @@ describe('user role', () => {
   //   // TODO
   // });
 
-  // Should not be able to edit foreign items
+  // Should not be able to edit foreign lists
 
-  // Should not be able to delete foreign items
+  // Should not be able to delete foreign cards
 
   // TODO
 });
@@ -509,7 +617,9 @@ describe('board member', () => {
 
   // should be able to edit private board?
 
-  // should not be able to delete private board he is added to
+  test('should NOT be able to delete private board he is added to', async () => {
+    shouldNotRemoveX(data.boards[0], 'board', data.users[1]);
+  });
 
   // should be able to create lists for the private board
 

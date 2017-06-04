@@ -11,6 +11,7 @@
   "dependencies": {
     "babel-polyfill": "^6.20.0",
     "babel-register": "^6.18.0",
+    "graphql-query-builder": "^1.0.7",
     "graphql-relay": "^0.5.1",
     "mongodb": "^2.2.27",
     "spikenail": "^0.3.0",
