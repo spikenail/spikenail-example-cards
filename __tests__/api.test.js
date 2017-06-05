@@ -304,14 +304,47 @@ async function shouldRemoveX(item, name, user) {
     name: name,
     item: item
   });
-  
-  console.log('---- shouldRemove X', query);
 
   let result = await runQuery(query, user);
 
-  console.log('----- should remove X result', result);
-
   expectSuccessfulRemove(result, item);
+}
+
+/**
+ * Should successful update X
+ *
+ * @param item
+ * @param name
+ * @param user
+ * @param input
+ * @returns {Promise.<void>}
+ */
+async function shouldUpdateX(item, name, user, input) {
+  let query = buildMutationQuery({
+    action: 'update',
+    name: name,
+    item: item,
+    input: input
+  });
+
+  let result = await runQuery(query, user);
+
+  expectSuccessfulUpdate(result, input, name);
+}
+
+/**
+ * Expect successful update
+ *
+ * @param result
+ * @param input
+ * @param name
+ */
+function expectSuccessfulUpdate(result, input, name) {
+  let item = result.data[Object.keys(result.data)[0]][name];
+
+  for (let prop of Object.keys(input)) {
+    expect(item[prop]).toBe(input[prop]);
+  }
 }
 
 /**
@@ -330,6 +363,11 @@ function expectSuccessfulRemove(result) {
  * @param args
  */
 function buildMutationQuery(args) {
+  let input = args.input || {};
+
+  if (args.item) {
+    input.id = toGlobalId(args.name, args.item._id);
+  }
 
   let output = '';
 
@@ -337,10 +375,11 @@ function buildMutationQuery(args) {
     output = 'removedId';
   }
 
-  let input = args.input || {};
-
-  if (args.item) {
-    input.id = toGlobalId(args.name, args.item._id);
+  if (args.action === 'update') {
+    // Dynamically build output based on input
+    output = `${args.name} {
+      ${Object.keys(input).join(', ')}
+    }`;
   }
 
   let query = `mutation {
@@ -606,7 +645,9 @@ describe('board owner', () => {
     await shouldRemoveX(data.boards[4], 'board', data.users[0]);
   });
 
-  // Should be able to update the board he owns
+  test('should be able to update the board he owns', async () => {
+    await shouldUpdateX(data.boards[0], 'board', data.users[0], { name: "New board name" })
+  });
 
   // Should be able to create, update, delete lists for his own board
 
