@@ -355,6 +355,40 @@ async function shouldNotUpdateX(item, name, user, input) {
 }
 
 /**
+ * Should create X
+ *
+ * @returns {Promise.<void>}
+ */
+async function shouldCreateX(name, user, input) {
+  let query = buildMutationQuery({
+    action: 'create',
+    name: name,
+    input: input
+  });
+
+  let result = await runQuery(query, user);
+
+  expectSuccessfulCreate(result, input, name);
+}
+
+/**
+ * Should not create X
+ *
+ * @returns {Promise.<void>}
+ */
+async function shouldNotCreateX(name, user, input) {
+  let query = buildMutationQuery({
+    action: 'create',
+    name: name,
+    input: input
+  });
+
+  let result = await runQuery(query, user);
+
+  expectAccessError(result);
+}
+
+/**
  * Expect successful update
  *
  * @param result
@@ -362,6 +396,21 @@ async function shouldNotUpdateX(item, name, user, input) {
  * @param name
  */
 function expectSuccessfulUpdate(result, input, name) {
+  let item = result.data[Object.keys(result.data)[0]][name];
+
+  for (let prop of Object.keys(input)) {
+    expect(item[prop]).toBe(input[prop]);
+  }
+}
+
+/**
+ * Expect successful create
+ *
+ * @param result
+ * @param input
+ * @param name
+ */
+function expectSuccessfulCreate(result, input, name) {
   let item = result.data[Object.keys(result.data)[0]][name];
 
   for (let prop of Object.keys(input)) {
@@ -400,6 +449,13 @@ function buildMutationQuery(args) {
   if (args.action === 'update') {
     // Dynamically build output based on input
     output = `${args.name} {
+      ${Object.keys(input).join(', ')}
+    }`;
+  }
+
+  if (args.action === 'create') {
+    output = `${args.name} {
+      id,
       ${Object.keys(input).join(', ')}
     }`;
   }
@@ -621,13 +677,6 @@ describe('user role', () => {
     await shouldNotRemoveX(data.boards[3], 'board', data.users[0]);
   });
 
-  // test('should be able to create lists', async () => {
-  //   // TODO
-  // });
-  //
-  // test('should be able to create cards', async () => {
-  //   // TODO
-  // });
 
   // Should not be able to edit foreign lists
 
@@ -639,6 +688,7 @@ describe('user role', () => {
 
 
 describe('board owner', () => {
+
   test('should be able to read private board he owns', async () => {
     let id = toGlobalId('board', data.boards[0]['_id'].toString());
 
@@ -671,9 +721,16 @@ describe('board owner', () => {
     await shouldUpdateX(data.boards[0], 'board', data.users[0], { name: "New board name" })
   });
 
-  // Should be able to create, update, delete lists for his own board
+  test('should be able to create, update, delete lists for his own board', async () => {
+    let boardId = toGlobalId('board', data.boards[0]['_id']);
+    await shouldCreateX('list', data.users[0], { name: "My new list", boardId: boardId });
+  });
 
-  // Should not be able to create lists for foreign board
+  test('should not be able to create lists for foreign or not existing board', async () => {
+    // 3 test cases boardId specified to foreign board
+    // boardId incorrect value
+    // boardId not specified
+  });
 
   // Should be able to create cards for his own board
 
