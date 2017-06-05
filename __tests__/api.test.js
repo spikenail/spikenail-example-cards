@@ -694,7 +694,7 @@ describe('board member', () => {
   });
 
   test('should NOT be able to delete private board he is added to', async () => {
-    shouldNotRemoveX(data.boards[0], 'board', data.users[1]);
+    await shouldNotRemoveX(data.boards[0], 'board', data.users[1]);
   });
 
   // TODO: should be able to edit private board?
@@ -719,8 +719,11 @@ describe('board observer', () => {
   });
 
   test('should not be able to edit private board he is added to as a observer', async () => {
-    shouldNotUpdateX(data.boards[0], 'board', data.users[2], { name: "Update attempt" });
+    await shouldNotUpdateX(data.boards[0], 'board', data.users[2], { name: "Update attempt" });
   });
 
   // should not be able to delete private board he is added to as a observer
+  test('should NOT be able to delete private board he is added to as a observer', async () => {
+    await shouldNotRemoveX(data.boards[0], 'board', data.users[2]);
+  });
 });
