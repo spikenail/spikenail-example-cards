@@ -333,6 +333,28 @@ async function shouldUpdateX(item, name, user, input) {
 }
 
 /**
+ * Should not allow to update X
+ *
+ * @param item
+ * @param name
+ * @param user
+ * @param input
+ * @returns {Promise.<void>}
+ */
+async function shouldNotUpdateX(item, name, user, input) {
+  let query = buildMutationQuery({
+    action: 'update',
+    name: name,
+    item: item,
+    input: input
+  });
+
+  let result = await runQuery(query, user);
+
+  expectAccessError(result);
+}
+
+/**
  * Expect successful update
  *
  * @param result
@@ -671,13 +693,15 @@ describe('board member', () => {
     expect(result.data.getBoard.userId).toBe(toGlobalId('user', data.users[0]._id.toString()));
   });
 
-  // should be able to edit private board?
-
   test('should NOT be able to delete private board he is added to', async () => {
     shouldNotRemoveX(data.boards[0], 'board', data.users[1]);
   });
 
-  // should be able to create lists for the private board
+  // TODO: should be able to edit private board?
+
+  // should be able to create lists for the private board he is added to
+
+  // should be able to create cards for the lists
 
 });
 
@@ -694,6 +718,9 @@ describe('board observer', () => {
     expect(result.data.getBoard.userId).toBe(toGlobalId('user', data.users[0]._id.toString()));
   });
 
-  // should not be able to edit private board he is added to as a observer
+  test('should not be able to edit private board he is added to as a observer', async () => {
+    shouldNotUpdateX(data.boards[0], 'board', data.users[2], { name: "Update attempt" });
+  });
 
+  // should not be able to delete private board he is added to as a observer
 });
