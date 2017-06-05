@@ -194,7 +194,7 @@ async function updateBoard(board, user, input) {
   let token = user.tokens[0].token;
 
   let query = `mutation {
-    updateBoard(input: ${stringifyObject(input)}) {
+    updateBoard(input: ${stringifyObject(input, { singleQuotes: false })}) {
       board {
         id
         userId
@@ -291,14 +291,37 @@ async function shouldNotRemoveX(item, name, user) {
 }
 
 /**
- * Should remove item X
+ * Should successful remove item X
+ *
  * @param item
  * @param name
  * @param user
  * @returns {Promise.<void>}
  */
 async function shouldRemoveX(item, name, user) {
+  let query = buildMutationQuery({
+    action: 'remove',
+    name: name,
+    item: item
+  });
+  
+  console.log('---- shouldRemove X', query);
 
+  let result = await runQuery(query, user);
+
+  console.log('----- should remove X result', result);
+
+  expectSuccessfulRemove(result, item);
+}
+
+/**
+ * Expect successful removing of item
+ *
+ * @param result
+ */
+function expectSuccessfulRemove(result) {
+  let removedId = result.data[Object.keys(result.data)[0]].removedId;
+  expect(removedId).not.toBe(null);
 }
 
 /**
@@ -321,7 +344,7 @@ function buildMutationQuery(args) {
   }
 
   let query = `mutation {
-    ${args.action}${capitalizeFirstLetter(args.name)}(input: ${stringifyObject(input)}) {
+    ${args.action}${capitalizeFirstLetter(args.name)}(input: ${stringifyObject(input, { singleQuotes: false })}) {
       ${output}
       errors {
         code
@@ -342,16 +365,6 @@ function buildMutationQuery(args) {
 function expectAccessError(result) {
   let errors = result.data[Object.keys(result.data)[0]].errors;
   expect(errors[0].code).toBe("403");
-}
-
-/**
- *
- * @param X
- * @param user
- * @returns {Promise.<void>}
- */
-async function shouldDeleteX(X, user) {
-
 }
 
 /**
@@ -538,13 +551,13 @@ describe('user role', () => {
   });
 
   test('should NOT be able to update foreign public and private boards', async () => {
-    shouldNotUpdateBoard(data.boards[2], data.users[0]);
-    shouldNotUpdateBoard(data.boards[3], data.users[0]);
+    await shouldNotUpdateBoard(data.boards[2], data.users[0]);
+    await shouldNotUpdateBoard(data.boards[3], data.users[0]);
   });
 
   test('should NOT be able to delete foreign public and private boards', async () => {
-    shouldNotRemoveX(data.boards[2], 'board', data.users[0]);
-    shouldNotRemoveX(data.boards[3], 'board', data.users[0]);
+    await shouldNotRemoveX(data.boards[2], 'board', data.users[0]);
+    await shouldNotRemoveX(data.boards[3], 'board', data.users[0]);
   });
 
   // test('should be able to create lists', async () => {
@@ -589,7 +602,9 @@ describe('board owner', () => {
     expect(result.data.getBoard.userId).toBe(toGlobalId('user', data.users[0]._id.toString()));
   });
 
-  // Should be able to delete the board he owns
+  test('should be able to remove the board he owns', async () => {
+    await shouldRemoveX(data.boards[4], 'board', data.users[0]);
+  });
 
   // Should be able to update the board he owns
 

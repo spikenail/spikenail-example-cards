@@ -78,6 +78,11 @@ let boards = [{
   name: `Public board of Julie's Company`,
   isPrivate: false,
   userId: users[3]._id
+}, {
+  _id: new ObjectID('592bfc906f39f790cf4b9b7b'),
+  name: `Delete me. Private board of Igor's company`,
+  userId: users[0]._id,
+  isPrivate: true
 }];
 
 
