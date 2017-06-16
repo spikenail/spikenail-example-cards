@@ -85,9 +85,60 @@ let boards = [{
   isPrivate: true
 }];
 
+// TODO: would it be better to keep everything in single object tree?
+let lists = [{
+  _id: new ObjectID('593857415e0d351223414458'),
+  name: "Stage 0",
+  boardId: boards[2]._id
+}, {
+  _id: new ObjectID('593857415e0d351223414459'),
+  name: "Stage 1",
+  boardId: boards[2]._id
+}, {
+  _id: new ObjectID('593857415e0d35122341445a'),
+  name: "Stage 2",
+  boardId: boards[2]._id
+}, {
+  name: 'January',
+  boardId: boards[0]._id
+}, {
+  name: 'February',
+  boardId: boards[0]._id
+}, {
+  name: 'March',
+  boardId: boards[0]._id
+}, {
+  name: 'April',
+  boardId: boards[0]._id
+}, {
+  name: 'May',
+  boardId: boards[0]._id
+}, {
+  name: 'June',
+  boardId: boards[0]._id
+}, {
+  name: 'July',
+  boardId: boards[0]._id
+}, {
+  name: 'August',
+  boardId: boards[0]._id
+}, {
+  name: 'September',
+  boardId: boards[0]._id
+}, {
+  name: 'October',
+  boardId: boards[0]._id
+}, {
+  name: 'November',
+  boardId: boards[0]._id
+}, {
+  name: 'December',
+  boardId: boards[0]._id
+}];
 
 // Export collections
 export default {
   users,
-  boards
+  boards,
+  lists
 }

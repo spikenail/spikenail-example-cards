@@ -55,7 +55,7 @@ export default new Board({
           return false;
         }
 
-        return { 'memberships.userId': ctx.currentUser._id, 'memberships.role': 'member' };
+        return { 'memberships': { '$elemMatch': { 'userId': ctx.currentUser._id, role: 'member' } } }
       }
     },
     observer: {
@@ -64,7 +64,7 @@ export default new Board({
           return false;
         }
 
-        return {  'memberships.userId': ctx.currentUser._id, 'memberships.role': 'observer' }
+        return { 'memberships': { '$elemMatch': { 'userId': ctx.currentUser._id, role: 'observer' } } }
       }
     }
   }

@@ -13,9 +13,6 @@ export default new Card({
     description: {
       type: String
     },
-    userId: {
-      type: 'id'
-    },
     listId: {
       type: 'id'
     },
