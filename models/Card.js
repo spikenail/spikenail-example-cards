@@ -28,9 +28,20 @@ export default new Card({
   },
   acls: [{
     allow: false,
-  },{
+  }, {
+    // The one who can update list should be able to do any action on card
+    allow: true,
+    actions: '*',
+    roles: '*',
+    checkRelation: {
+      name: 'list',
+      action: 'update'
+    }
+  }, {
+    // The one who can READ list should be able to read card
     allow: true,
     actions: 'read',
+    roles: '*',
     checkRelation: {
       name: 'list',
       action: 'read'
