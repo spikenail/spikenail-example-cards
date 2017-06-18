@@ -1,5 +1,7 @@
 import { ObjectID } from 'mongodb';
 
+const clone = require('lodash.clone');
+
 // Users
 let users = [{
   _id: new ObjectID('592bee6078d8b58f1656aefa'),
@@ -40,7 +42,7 @@ let users = [{
 }];
 
 // Lets create boards
-let boards = [{
+let data = [{
   _id: new ObjectID('592bfc906f39f790cf4b9b87'),
   name: `Private board of Igor's Company`,
   userId: users[0]._id,
@@ -51,6 +53,38 @@ let boards = [{
   }, {
     userId: users[2]._id,
     role: 'observer'
+  }],
+  lists: [{
+    _id: new ObjectID('59466e8cc872f08c081598d3'),
+    name: 'January'
+  }, {
+    _id: new ObjectID('59466e8cc872f08c081598d4'),
+    name: 'February'
+  }, {
+    _id: new ObjectID('59466e8cc872f08c081598d5'),
+    name: 'March'
+  }, {
+    _id: new ObjectID('59466e8cc872f08c081598d6'),
+    name: 'April'
+  }, {
+    _id: new ObjectID('59466e8cc872f08c081598d7'),
+    name: 'May'
+  }, {
+    _id: new ObjectID('59466e8cc872f08c081598d8'),
+    name: 'June'
+  }, {
+    _id: new ObjectID('59466e8cc872f08c081598d9'),
+    name: 'July'
+  }, {
+    name: 'August'
+  }, {
+    name: 'September'
+  }, {
+    name: 'October'
+  }, {
+    name: 'November'
+  }, {
+    name: 'December'
   }]
 }, {
   _id: new ObjectID('592bfc906f39f790cf4b9b88'),
@@ -72,6 +106,39 @@ let boards = [{
   memberships: [{
     userId: users[4]._id,
     role: 'member'
+  }],
+  lists: [{
+    _id: new ObjectID('593857415e0d351223414458'),
+    name: "Stage 0",
+    cards: [{
+      title: 'Task one',
+      description: 'Create task two'
+    }, {
+      title: 'Task two',
+      description: 'Create task three'
+    }]
+  }, {
+    _id: new ObjectID('593857415e0d351223414459'),
+    name: "Stage 1",
+    cards: [{
+      title: 'Buy tomato',
+      description: 'red'
+    }, {
+      title: 'Buy carrot',
+      description: 'orange'
+    }, {
+      title: 'Buy knife'
+    }]
+  }, {
+    _id: new ObjectID('593857415e0d35122341445a'),
+    name: "Stage 2",
+    cards: [{
+      title: 'Www',
+      description: 'Aaa'
+    }, {
+      title: 'yyy',
+      description: 'nnn'
+    }]
   }]
 }, {
   _id: new ObjectID('592bfc906f39f790cf4b9b8a'),
@@ -85,60 +152,42 @@ let boards = [{
   isPrivate: true
 }];
 
-// TODO: would it be better to keep everything in single object tree?
-let lists = [{
-  _id: new ObjectID('593857415e0d351223414458'),
-  name: "Stage 0",
-  boardId: boards[2]._id
-}, {
-  _id: new ObjectID('593857415e0d351223414459'),
-  name: "Stage 1",
-  boardId: boards[2]._id
-}, {
-  _id: new ObjectID('593857415e0d35122341445a'),
-  name: "Stage 2",
-  boardId: boards[2]._id
-}, {
-  name: 'January',
-  boardId: boards[0]._id
-}, {
-  name: 'February',
-  boardId: boards[0]._id
-}, {
-  name: 'March',
-  boardId: boards[0]._id
-}, {
-  name: 'April',
-  boardId: boards[0]._id
-}, {
-  name: 'May',
-  boardId: boards[0]._id
-}, {
-  name: 'June',
-  boardId: boards[0]._id
-}, {
-  name: 'July',
-  boardId: boards[0]._id
-}, {
-  name: 'August',
-  boardId: boards[0]._id
-}, {
-  name: 'September',
-  boardId: boards[0]._id
-}, {
-  name: 'October',
-  boardId: boards[0]._id
-}, {
-  name: 'November',
-  boardId: boards[0]._id
-}, {
-  name: 'December',
-  boardId: boards[0]._id
-}];
+// Convert tree to plain collections
+let lists = [];
+let cards = [];
+let boards = [];
+
+for (let board of data) {
+  if (board.lists) {
+    for (let list of board.lists) {
+      list.boardId = board._id;
+      if (list.cards) {
+        // Iterate cards
+        for (let card of list.cards) {
+          card.listId = list._id;
+          cards.push(card);
+        }
+      }
+
+      let newList = clone(list);
+      delete newList.cards;
+      lists.push(newList);
+    }
+  }
+
+  let newBoard = clone(board);
+  delete newBoard.lists;
+  boards.push(newBoard);
+}
 
 // Export collections
 export default {
-  users,
-  boards,
-  lists
+  users: users,
+  boards: data,
+  collections: {
+    users,
+    boards,
+    lists,
+    cards
+  }
 }

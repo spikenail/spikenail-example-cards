@@ -4,6 +4,8 @@ const stringifyObject = require('stringify-object');
 
 const Query = require('graphql-query-builder');
 
+const clone = require('lodash.clone');
+
 import { Spikenail } from 'spikenail'
 
 import {
@@ -60,10 +62,8 @@ async function clearDatabase() {
  * Push initial data in the database
  */
 async function initDatabase() {
-  console.log('init database');
-
-  for (let collectionName of Object.keys(data)) {
-    let collectionData = data[collectionName];
+  for (let collectionName of Object.keys(data.collections)) {
+    let collectionData = data.collections[collectionName];
     // Insert entries
     let collection = db.collection(collectionName);
     await collection.insertMany(collectionData);
@@ -736,7 +736,10 @@ describe('user role', () => {
 
   // Should not be able to delete foreign cards
   test('should NOT be able to read foreign LIST', async () => {
-    await shouldNotGetX(data.lists[1], 'list', data.users[0]);
+    let list = clone(data.boards[2].lists[0]);
+    delete list.cards;
+
+    await shouldNotGetX(list, 'list', data.users[0]);
   });
 
 });
@@ -796,12 +799,14 @@ describe('board owner', () => {
       boardId: toGlobalId('board', data.boards[3]['_id'])
     });
 
+    // TODO
     // boardId not specified
     // await shouldNotCreateX('list', data.users[0], {
     //   name: "My new list",
     //   boardId: toGlobalId('board', data.boards[2]['_id'])
     // });
 
+    // TODO
     // not existing boardId
     // await shouldNotCreateX('list', data.users[0], {
     //   name: "My new list",
@@ -819,8 +824,8 @@ describe('board member', () => {
 
   let member = data.users[1];
   let memberBoard = data.boards[0];
-  let memberBoardList = data.lists[3];
-  let memberBoardListToRemove = data.lists[4];
+  let memberBoardList = memberBoard.lists[0];
+  let memberBoardListToRemove = memberBoard.lists[1];
 
   test('should be able to read private board he is added to as a member', async () => {
 
@@ -862,7 +867,7 @@ describe('board observer', () => {
 
   let observer = data.users[2];
   let observerBoard = data.boards[0];
-  let observerBoardList = data.lists[3];
+  let observerBoardList = observerBoard.lists[0];
 
   test('should be able to read private board he is added to as a observer', async () => {
 

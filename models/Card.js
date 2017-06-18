@@ -16,9 +16,6 @@ export default new Card({
     listId: {
       type: 'id'
     },
-    boardId: {
-      type: 'id'
-    },
     list: {
       relation: 'belongsTo'
     },
