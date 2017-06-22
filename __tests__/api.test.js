@@ -257,7 +257,7 @@ async function shouldNotUpdateBoard(board, user) {
  */
 async function runQuery(query, user) {
 
-  let token = user.tokens[0].token;
+  let token = user ? user.tokens[0].token : '';
 
   // TODO: don't put token in header if not specified
   let res = await request(Spikenail.server)
@@ -573,7 +573,12 @@ async function testMutationAccessError(name, input) {
 }
 
 describe('anonymous role', () => {
-  test('should be allowed to read public board by getBoard query', async() => {
+
+  let board = data.boards[0];
+  let list = board.lists[0];
+  let card = list.cards[0];
+
+  test('should be allowed to read public board by getBoard query', async () => {
     let id = toGlobalId('board', data.boards[1]['_id'].toString());
     console.log('globlid', id );
 
@@ -596,7 +601,7 @@ describe('anonymous role', () => {
     expect(result.data.getBoard.id).toBe(id);
   });
 
-  test('should not be allowed to read private board by getBoard query', async() => {
+  test('should not be allowed to read private board by getBoard query', async () => {
     let id = toGlobalId('board', data.boards[0]['_id'].toString());
 
     let query = `{
@@ -650,21 +655,46 @@ describe('anonymous role', () => {
     }
   });
 
-  test('should not be allowed to create boards', async() => {
+  test('should not be allowed to create boards', async () => {
     await testMutationAccessError('board', `{ name: "New Board" }`);
   });
 
-  test('should not be allowed to create LISTs', async() => {
+  test('should not be allowed to create LISTs', async () => {
     await testMutationAccessError('list', `{ name: "New List" }`);
   });
 
-  test('should not be allowed to create cards', async() => {
+  test('should not be allowed to create cards', async () => {
     await testMutationAccessError('card', `{ title: "New Card" }`);
   });
 
-  // TODO: should not be allowed to update items
+  // update tests
+  test('should not be allowed to update board', async () => {
+    await shouldNotUpdateX(
+      board, 'board', null, { name: 'Updated board name' });
+  });
 
-  // TODO: should not be allowed to delete items
+  test('should not be allowed to update list', async () => {
+    await shouldNotUpdateX(
+      list, 'list', null, { name: 'Updated list name' });
+  });
+
+  test('should not be allowed to update card', async () => {
+    await shouldNotUpdateX(
+      card, 'card', null, { title: 'Updated card title', description: 'Updated description' });
+  });
+
+  // remove tests
+  test('should not be allowed to remove board', async () => {
+    await shouldNotRemoveX(board, 'board', null);
+  });
+
+  test('should not be allowed to remove list', async () => {
+    await shouldNotRemoveX(list, 'list', null);
+  });
+
+  test('should not be allowed to remove card', async () => {
+    await shouldNotRemoveX(card, 'card', null);
+  });
 
   // Should only see lists of Public boards
 
