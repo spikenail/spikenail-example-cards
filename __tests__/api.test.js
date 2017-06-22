@@ -744,9 +744,11 @@ describe('user role', () => {
 
 });
 
-
-
 describe('board owner', () => {
+
+  let ownBoard = data.boards[0];
+
+  let foreignPrivateBoard = data.boards[2];
 
   test('should be able to read private board he owns', async () => {
     let id = toGlobalId('board', data.boards[0]['_id'].toString());
@@ -814,9 +816,15 @@ describe('board owner', () => {
     // });
   });
 
-  // Should be able to create cards for his own board
+  test('should be able to create CARDs for his own board', async () => {
+    let listId = toGlobalId('list', ownBoard.lists[0]._id);
+    await shouldCreateX('card', data.users[0], { title: 'New successful card', listId: listId });
+  });
 
-  // Should not be able to create cards for foreign board
+  test('should NOT be able to create CARDs for foreign board', async () => {
+    let listId = toGlobalId('list', foreignPrivateBoard.lists[0]._id);
+    await shouldNotCreateX('card', data.users[0], { title: 'Can not create this card', listId: listId })
+  });
 
 });
 
@@ -860,7 +868,10 @@ describe('board member', () => {
     // TODO: test changing of boardId
   });
 
-  // should be able to create cards for the lists
+  test('should be able to create CARDs for the private board he is added as a member', async () => {
+    let listId = toGlobalId('list', memberBoardList._id);
+    await shouldCreateX('card', member, { title: 'New member card', listId: listId });
+  });
 });
 
 describe('board observer', () => {
@@ -904,5 +915,18 @@ describe('board observer', () => {
 
   test('should NOT be able to delete LIST of the board he is added to as an observer', async () => {
     await shouldNotRemoveX(observerBoardList, 'list', observer);
+  });
+
+  test('should NOT be able to update CARD of the board he is added to as an observer', async () => {
+    // TODO test with wrong listId
+    // TODO test with not existing listId
+
+    // observerBoardList
+    await shouldNotUpdateX(
+      observerBoardList.cards[0], 'card', observer, { title: 'Updated card title', description: 'Updated description' });
+  });
+
+  test('should NOT be able to delete CARD of the board he is added to as an observer', async () => {
+    await shouldNotRemoveX(observerBoardList.cards[0], 'card', observer);
   });
 });
