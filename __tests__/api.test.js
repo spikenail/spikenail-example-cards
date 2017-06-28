@@ -423,6 +423,8 @@ function buildGetXQuery(item, name) {
 async function shouldNotGetX(item, name, user) {
   let query = buildGetXQuery(item, name);
 
+  console.log('should not get X query ---', query);
+
   let result = await runQuery(query, user);
 
   expect(result.data['get' + capitalizeFirstLetter(name)]).toBe(null);
@@ -579,6 +581,19 @@ describe('anonymous role', () => {
   let list = board.lists[0];
   let card = list.cards[0];
 
+  let publicBoard = data.boards[3];
+
+  console.log('anon publicboard --- ', publicBoard);
+
+  let publicList = publicBoard.lists[0];
+
+  console.log('anon publiclist --- ', publicList);
+
+  let publicCard = publicList.cards[0];
+
+  console.log('anon publicCard --- ', publicCard);
+
+  // Able to read tests
   test('should be allowed to read public board by getBoard query', async () => {
     let id = toGlobalId('board', data.boards[1]['_id'].toString());
     console.log('globlid', id );
@@ -602,6 +617,15 @@ describe('anonymous role', () => {
     expect(result.data.getBoard.id).toBe(id);
   });
 
+  test('should be allowed to read list of public board by getBoard query', async () => {
+    await shouldGetX(publicList, 'list', null);
+  });
+
+  test('should be allowed to read card of public board by getBoard query', async () => {
+    await shouldGetX(publicCard, 'card', null);
+  });
+
+  // Not able to read tests
   test('should not be allowed to read private board by getBoard query', async () => {
     let id = toGlobalId('board', data.boards[0]['_id'].toString());
 
@@ -622,6 +646,17 @@ describe('anonymous role', () => {
     let result = JSON.parse(res.text);
 
     expect(result.data.getBoard).toBeNull();
+  });
+
+  test('should not be able to read list of private board by getBoard query', async () => {
+    // TODO: issue with attempting of getting card property -- use workaround or something
+    let checkList = clone(list);
+    delete checkList.cards;
+    await shouldNotGetX(checkList, 'list', null);
+  });
+
+  test('should not be able to read card of private board', async () => {
+    await shouldNotGetX(card, 'card', null);
   });
 
   test('should only see public boards in allBoards query', async () => {
@@ -656,49 +691,7 @@ describe('anonymous role', () => {
     }
   });
 
-  test('should not be allowed to create boards', async () => {
-    await testMutationAccessError('board', `{ name: "New Board" }`);
-  });
-
-  test('should not be allowed to create LISTs', async () => {
-    await testMutationAccessError('list', `{ name: "New List" }`);
-  });
-
-  test('should not be allowed to create cards', async () => {
-    await testMutationAccessError('card', `{ title: "New Card" }`);
-  });
-
-  // update tests
-  test('should not be allowed to update board', async () => {
-    await shouldNotUpdateX(
-      board, 'board', null, { name: 'Updated board name' });
-  });
-
-  test('should not be allowed to update list', async () => {
-    await shouldNotUpdateX(
-      list, 'list', null, { name: 'Updated list name' });
-  });
-
-  test('should not be allowed to update card', async () => {
-    await shouldNotUpdateX(
-      card, 'card', null, { title: 'Updated card title', description: 'Updated description' });
-  });
-
-  // remove tests
-  test('should not be allowed to remove board', async () => {
-    await shouldNotRemoveX(board, 'board', null);
-  });
-
-  test('should not be allowed to remove list', async () => {
-    await shouldNotRemoveX(list, 'list', null);
-  });
-
-  test('should not be allowed to remove card', async () => {
-    await shouldNotRemoveX(card, 'card', null);
-  });
-
   test('Should only see lists of public boards in readAll query', async () => {
-
     let query = `{
       viewer {
         allLists {
@@ -731,7 +724,6 @@ describe('anonymous role', () => {
   });
 
   test('Should only see cards that belongs to public boards', async () => {
-
     let query = `{
       viewer {
         allCards {
@@ -780,9 +772,48 @@ describe('anonymous role', () => {
       ).toBe(true)
     }
   });
-  // Should not be able read list of private board
 
-  // Should not be able to read card of private board
+  // create tests
+  test('should not be allowed to create boards', async () => {
+    await testMutationAccessError('board', `{ name: "New Board" }`);
+  });
+
+  test('should not be allowed to create LISTs', async () => {
+    await testMutationAccessError('list', `{ name: "New List" }`);
+  });
+
+  test('should not be allowed to create cards', async () => {
+    await testMutationAccessError('card', `{ title: "New Card" }`);
+  });
+
+  // update tests
+  test('should not be allowed to update board', async () => {
+    await shouldNotUpdateX(
+      board, 'board', null, { name: 'Updated board name' });
+  });
+
+  test('should not be allowed to update list', async () => {
+    await shouldNotUpdateX(
+      list, 'list', null, { name: 'Updated list name' });
+  });
+
+  test('should not be allowed to update card', async () => {
+    await shouldNotUpdateX(
+      card, 'card', null, { title: 'Updated card title', description: 'Updated description' });
+  });
+
+  // remove tests
+  test('should not be allowed to remove board', async () => {
+    await shouldNotRemoveX(board, 'board', null);
+  });
+
+  test('should not be allowed to remove list', async () => {
+    await shouldNotRemoveX(list, 'list', null);
+  });
+
+  test('should not be allowed to remove card', async () => {
+    await shouldNotRemoveX(card, 'card', null);
+  });
 });
 
 // authenticated role
