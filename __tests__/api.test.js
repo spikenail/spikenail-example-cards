@@ -10,6 +10,7 @@ import { Spikenail } from 'spikenail'
 
 import {
   toGlobalId,
+  fromGlobalId
 } from 'graphql-relay';
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 30000;
@@ -696,10 +697,89 @@ describe('anonymous role', () => {
     await shouldNotRemoveX(card, 'card', null);
   });
 
-  // Should only see lists of Public boards
+  test('Should only see lists of public boards in readAll query', async () => {
 
-  // Should only see cards of Public boards
+    let query = `{
+      viewer {
+        allLists {
+          edges {
+            node {
+              id
+              name
+              boardId
+            }
+          }
+        }
+      }
+    }`;
 
+    let result = await runQuery(query, null);
+    console.log('all lists - result', result);
+    console.log('all lists', result.data.viewer.allLists);
+    let edges = result.data.viewer.allLists.edges;
+
+    console.log('edges', edges);
+
+    let publicBoardIds = data.boards.map(board => toGlobalId('board', board._id));
+
+    console.log('public board ids', publicBoardIds);
+
+    for (let edge of edges) {
+      console.log('edge', edge);
+      expect(!!~publicBoardIds.indexOf(edge.node.boardId)).toBe(true)
+    }
+  });
+
+  test('Should only see cards that belongs to public boards', async () => {
+
+    let query = `{
+      viewer {
+        allCards {
+          edges {
+            node {
+              id
+              title
+              listId
+              description
+            }
+          }
+        }
+      }
+    }`;
+
+    let result = await runQuery(query, null);
+
+    console.log('all cards result --- ', result);
+
+    let edges = result.data.viewer.allCards.edges;
+
+    // Find public boards and collect public cards ids
+    let publicCardIds = [];
+    data.boards.filter(board => board.isPrivate === false).forEach(board => {
+      if (!board.lists) {
+        return;
+      }
+
+      board.lists.forEach(list => {
+        if (!list.cards) {
+          return;
+        }
+
+        list.cards.forEach(card => {
+          publicCardIds.push(card._id);
+        })
+      });
+    });
+
+    console.log('public card ids >', publicCardIds);
+
+    for (let edge of edges) {
+      console.log('edge', edge);
+      expect(
+        !!~publicCardIds.indexOf(fromGlobalId(edge.node.id).id)
+      ).toBe(true)
+    }
+  });
   // Should not be able read list of private board
 
   // Should not be able to read card of private board

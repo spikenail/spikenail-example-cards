@@ -106,6 +106,13 @@ let data = [{
   }, {
     userId: users[2]._id,
     role: 'observer'
+  }],
+  lists: [{
+    name: 'AAA'
+  }, {
+    name: 'BBB'
+  }, {
+    name: 'CCC'
   }]
 }, {
   _id: new ObjectID('592bfc906f39f790cf4b9b89'),
@@ -120,9 +127,11 @@ let data = [{
     _id: new ObjectID('593857415e0d351223414458'),
     name: "Stage 0",
     cards: [{
+      _id: new ObjectID('595259726f8c2a1cfd36a2f5'),
       title: 'Task one',
       description: 'Create task two'
     }, {
+      _id: new ObjectID('595259726f8c2a1cfd36a2f6'),
       title: 'Task two',
       description: 'Create task three'
     }]
@@ -130,21 +139,26 @@ let data = [{
     _id: new ObjectID('593857415e0d351223414459'),
     name: "Stage 1",
     cards: [{
+      _id: new ObjectID('595259726f8c2a1cfd36a2f7'),
       title: 'Buy tomato',
       description: 'red'
     }, {
+      _id: new ObjectID('595259726f8c2a1cfd36a2f8'),
       title: 'Buy carrot',
       description: 'orange'
     }, {
+      _id: new ObjectID('595259726f8c2a1cfd36a2f9'),
       title: 'Buy knife'
     }]
   }, {
     _id: new ObjectID('593857415e0d35122341445a'),
     name: "Stage 2",
     cards: [{
+      _id: new ObjectID('595259726f8c2a1cfd36a2fa'),
       title: 'Www',
       description: 'Aaa'
     }, {
+      _id: new ObjectID('595259726f8c2a1cfd36a2fb'),
       title: 'yyy',
       description: 'nnn'
     }]
@@ -153,7 +167,24 @@ let data = [{
   _id: new ObjectID('592bfc906f39f790cf4b9b8a'),
   name: `Public board of Julie's Company`,
   isPrivate: false,
-  userId: users[3]._id
+  userId: users[3]._id,
+  lists: [{
+    name: 'XXX',
+    cards: [{
+      _id: new ObjectID('59527fbeab49df1f8b4f892d'),
+      title: 'Test card'
+    }]
+  }, {
+    name: 'YYY',
+    cards: [{
+      _id: new ObjectID('59527fbeab49df1f8b4f892e'),
+      title: 'test card 2'
+    }]
+  }, {
+    name: 'ZZZ'
+  }, {
+    name: 'GGG'
+  }]
 }, {
   _id: new ObjectID('592bfc906f39f790cf4b9b7b'),
   name: `Delete me. Private board of Igor's company`,
