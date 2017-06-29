@@ -169,12 +169,14 @@ let data = [{
   isPrivate: false,
   userId: users[3]._id,
   lists: [{
+    _id: new ObjectID('59537d1e1e70bb252614f50d'),
     name: 'XXX',
     cards: [{
       _id: new ObjectID('59527fbeab49df1f8b4f892d'),
       title: 'Test card'
     }]
   }, {
+    _id: new ObjectID('59537d1e1e70bb252614f50e'),
     name: 'YYY',
     cards: [{
       _id: new ObjectID('59527fbeab49df1f8b4f892e'),

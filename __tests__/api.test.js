@@ -758,7 +758,7 @@ describe('anonymous role', () => {
         }
 
         list.cards.forEach(card => {
-          publicCardIds.push(card._id);
+          publicCardIds.push(card._id.toString());
         })
       });
     });
@@ -814,6 +814,49 @@ describe('anonymous role', () => {
   test('should not be allowed to remove card', async () => {
     await shouldNotRemoveX(card, 'card', null);
   });
+
+  // Check that relations setup is correct
+
+  test('relations tree is fine', async () =>  {
+
+    let query = `{
+      viewer {
+        allBoards {
+          edges {
+            node {
+              id
+              isPrivate
+              userId
+              name
+              lists {
+                edges {
+                  node {
+                    id
+                    boardId
+                    name
+                    cards {
+                      edges {
+                        node {
+                          id
+                          listId
+                          description
+                          title
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }`;
+
+
+
+  });
+
 });
 
 // authenticated role
