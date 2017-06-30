@@ -816,7 +816,6 @@ describe('anonymous role', () => {
   });
 
   // Check that relations setup is correct
-
   test('relations tree is fine', async () =>  {
 
     let query = `{
@@ -828,12 +827,20 @@ describe('anonymous role', () => {
               isPrivate
               userId
               name
+              user {
+                id
+                name
+              }
               lists {
                 edges {
                   node {
                     id
                     boardId
                     name
+                    board {
+                      id
+                      name
+                    }
                     cards {
                       edges {
                         node {
@@ -841,6 +848,10 @@ describe('anonymous role', () => {
                           listId
                           description
                           title
+                          list {
+                            id
+                            name
+                          }
                         }
                       }
                     }
@@ -853,8 +864,21 @@ describe('anonymous role', () => {
       }
     }`;
 
+    let result = await runQuery(query, null);
 
+    let edges = result.data.viewer.allBoards.edges;
 
+    // Has many
+    expect(edges[1].node.lists.edges[0].node.cards.edges[0].node.id).toBeTruthy();
+
+    // Board belongs to user
+    expect(edges[0].node.user.id).toBeTruthy();
+
+    //List belongs to board
+    expect(edges[1].node.lists.edges[0].node.board).toBeTruthy();
+
+    // Card belongs to list
+    expect(edges[1].node.lists.edges[0].node.cards.edges[0].node.list.id).toBeTruthy();
   });
 
 });
