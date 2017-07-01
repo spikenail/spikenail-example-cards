@@ -881,6 +881,44 @@ describe('anonymous role', () => {
     expect(edges[1].node.lists.edges[0].node.cards.edges[0].node.list.id).toBeTruthy();
   });
 
+  test('has many does not return wrong items', async () => {
+
+    let query = `{
+      viewer {
+        allBoards {
+          edges {
+            node {
+              id
+              lists {
+                edges {
+                  node {
+                    id
+                    boardId
+                    name
+                  }
+                }
+              }
+            } 
+          }
+        }
+      }
+    }`;
+
+    let result = await runQuery(query, null);
+
+    let edges = result.data.viewer.allBoards.edges;
+
+    for (let board of edges) {
+      if (!board.node.lists) {
+        continue;
+      }
+
+      for (let list of board.node.lists.edges) {
+        expect(list.node.boardId).toBe(board.node.id);
+      }
+    }
+  });
+
 });
 
 // authenticated role
