@@ -583,15 +583,9 @@ describe('anonymous role', () => {
 
   let publicBoard = data.boards[3];
 
-  console.log('anon publicboard --- ', publicBoard);
-
   let publicList = publicBoard.lists[0];
 
-  console.log('anon publiclist --- ', publicList);
-
   let publicCard = publicList.cards[0];
-
-  console.log('anon publicCard --- ', publicCard);
 
   // Able to read tests
   test('should be allowed to read public board by getBoard query', async () => {
@@ -741,8 +735,6 @@ describe('anonymous role', () => {
 
     let result = await runQuery(query, null);
 
-    console.log('all cards result --- ', result);
-
     let edges = result.data.viewer.allCards.edges;
 
     // Find public boards and collect public cards ids
@@ -762,8 +754,6 @@ describe('anonymous role', () => {
         })
       });
     });
-
-    console.log('public card ids >', publicCardIds);
 
     for (let edge of edges) {
       console.log('edge', edge);
@@ -924,16 +914,47 @@ describe('anonymous role', () => {
 // authenticated role
 describe('user role', () => {
 
+  let user = data.users[0];
+  let publicBoard = data.boards[3];
+  let publicList = publicBoard.lists[0];
+  let publicCard = publicList.cards[0];
+
+  let privateBoard = data.boards[2];
+  let privateBoardList = privateBoard.lists[0];
+  let privateBoardCard = privateBoardList.cards[0];
+
+  // allowed to read tests
   test('should be allowed to read public board by getBoard query', async () => {
     expect(data.boards[3].isPrivate).toBe(false);
     await shouldReadBoard(data.boards[3], data.users[0]);
   });
 
-  test('should NOT be allowed to read foreign private board by getBoard query', async () => {
-    expect(data.boards[2].isPrivate).toBe(true);
-    await shouldNotReadBoard(data.boards[2], data.users[0]);
+  test('should be allowed to read LIST of public board by getBoard query', async () => {
+    await shouldGetX(publicList, 'list', user);
   });
 
+  test('should be allowed to read CARD of public board by getBoard query', async () => {
+    await shouldGetX(publicCard, 'card', user);
+  });
+
+  // should not be allowed to read tests
+  test('should NOT be allowed to read foreign private board by getBoard query', async () => {
+    expect(privateBoard.isPrivate).toBe(true);
+    await shouldNotReadBoard(privateBoard, user);
+  });
+
+  test('should not be able to read list of private board by getBoard query', async () => {
+    // TODO: issue with attempting of getting card property -- use workaround or something
+    let checkList = clone(privateBoardList);
+    delete checkList.cards;
+    await shouldNotGetX(checkList, 'list', user);
+  });
+
+  test('should not be able to read card of private board', async () => {
+    await shouldNotGetX(privateBoardCard, 'card', user);
+  });
+
+  // Create tests
   test('should be able to create new boards (private by default)', async () => {
 
     let name = 'My new board';
@@ -968,6 +989,7 @@ describe('user role', () => {
     expect(result.data.createBoard.board.isPrivate).toBe(true);
   });
 
+  // Should not able to modify data tests
   test('should NOT be able to update foreign public and private boards', async () => {
     await shouldNotUpdateBoard(data.boards[2], data.users[0]);
     await shouldNotUpdateBoard(data.boards[3], data.users[0]);
@@ -978,24 +1000,39 @@ describe('user role', () => {
     await shouldNotRemoveX(data.boards[3], 'board', data.users[0]);
   });
 
-  // Should not be able to edit foreign lists
+  test('should NOT be able to create LISTs for foreign (private, public) or not existing board', async () => {
 
-  // Should not be able to delete foreign cards
-  test('should NOT be able to read foreign LIST', async () => {
-    let list = clone(data.boards[2].lists[0]);
-    delete list.cards;
+    // Foreign private board
+    await shouldNotCreateX('list', data.users[0], {
+      name: "My new list",
+      boardId: toGlobalId('board', data.boards[2]['_id'])
+    });
 
-    await shouldNotGetX(list, 'list', data.users[0]);
+    // Foreign public board
+    await shouldNotCreateX('list', data.users[0], {
+      name: "My new list",
+      boardId: toGlobalId('board', data.boards[3]['_id'])
+    });
+
+    // TODO: boardId is not specified
+    // TODO: not existing boardId
   });
 
+  test('should NOT be able to create CARDs for foreign board', async () => {
+    let listId = toGlobalId('list', privateBoard.lists[0]._id);
+    await shouldNotCreateX('card', data.users[0], { title: 'Can not create this card', listId: listId })
+  });
 });
 
 describe('board owner', () => {
 
+  let user = data.users[0];
+
   let ownBoard = data.boards[0];
+  let ownList = ownBoard.lists[0];
+  let ownCard = ownList.cards[0];
 
-  let foreignPrivateBoard = data.boards[2];
-
+  // Should be able to read tests
   test('should be able to read private board he owns', async () => {
     let id = toGlobalId('board', data.boards[0]['_id'].toString());
 
@@ -1020,6 +1057,52 @@ describe('board owner', () => {
     expect(result.data.getBoard.userId).toBe(toGlobalId('user', data.users[0]._id.toString()));
   });
 
+  test('should be able to read LIST of the private board he owns', async () => {
+    await shouldGetX(ownList, 'list', user);
+  });
+
+  test('should be able to read CARD of the private board he owns', async () => {
+    await shouldGetX(ownCard, 'card', user);
+  });
+
+  test('Should see both public and private boards he owns in the allBoards query', async () => {
+    let query = `{
+      viewer {
+        allBoards {
+          edges {
+            node {
+              id
+              userId
+              name
+              isPrivate
+            }
+          }
+        }
+      }
+    }`;
+
+    let result = await runQuery(query, user);
+
+    let edges = result.data.viewer.allBoards.edges;
+
+    let privateCount = 0;
+    let publicCount = 0;
+
+    for (let edge of edges) {
+      if (edge.node.isPrivate) {
+        privateCount++;
+      } else {
+        publicCount++;
+      }
+    }
+
+    expect(privateCount).toBeTruthy();
+    expect(publicCount).toBeTruthy();
+  });
+
+  // TODO: allCards, allLists tests
+
+  //  Should be able to modify data tests
   test('should be able to remove the board he owns', async () => {
     await shouldRemoveX(data.boards[4], 'board', data.users[0]);
   });
@@ -1028,48 +1111,22 @@ describe('board owner', () => {
     await shouldUpdateX(data.boards[0], 'board', data.users[0], { name: "New board name" })
   });
 
-  test('should be able to create, update, delete LISTs for his own board', async () => {
+  test('should be able to create, update, delete LISTs for his own private board', async () => {
     let boardId = toGlobalId('board', data.boards[0]['_id']);
     await shouldCreateX('list', data.users[0], { name: "My new list", boardId: boardId });
+
+    await shouldUpdateX(ownList, 'list', user, { name: "New name" });
+
+    await shouldRemoveX(ownBoard.lists[3], 'list', user);
   });
 
-  test('should NOT be able to create LISTs for foreign (private, public) or not existing board', async () => {
-
-    // Foreign private board
-    await shouldNotCreateX('list', data.users[0], {
-      name: "My new list",
-      boardId: toGlobalId('board', data.boards[2]['_id'])
-    });
-
-    // Foreign public board
-    await shouldNotCreateX('list', data.users[0], {
-      name: "My new list",
-      boardId: toGlobalId('board', data.boards[3]['_id'])
-    });
-
-    // TODO
-    // boardId not specified
-    // await shouldNotCreateX('list', data.users[0], {
-    //   name: "My new list",
-    //   boardId: toGlobalId('board', data.boards[2]['_id'])
-    // });
-
-    // TODO
-    // not existing boardId
-    // await shouldNotCreateX('list', data.users[0], {
-    //   name: "My new list",
-    //   boardId: toGlobalId('board', data.boards[2]['_id'])
-    // });
-  });
-
-  test('should be able to create CARDs for his own board', async () => {
+  test('should be able to create, update, delete CARDs for his own private board', async () => {
     let listId = toGlobalId('list', ownBoard.lists[0]._id);
-    await shouldCreateX('card', data.users[0], { title: 'New successful card', listId: listId });
-  });
+    await shouldCreateX('card', user, { title: 'New successful card', listId: listId });
 
-  test('should NOT be able to create CARDs for foreign board', async () => {
-    let listId = toGlobalId('list', foreignPrivateBoard.lists[0]._id);
-    await shouldNotCreateX('card', data.users[0], { title: 'Can not create this card', listId: listId })
+    await shouldUpdateX(ownCard, 'card', user, { title: "Updated card title" });
+
+    await shouldRemoveX(ownList.cards[2], 'card', user);
   });
 
 });
