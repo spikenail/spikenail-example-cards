@@ -1124,7 +1124,7 @@ describe('board owner', () => {
     let listId = toGlobalId('list', ownBoard.lists[0]._id);
     await shouldCreateX('card', user, { title: 'New successful card', listId: listId });
 
-    await shouldUpdateX(ownCard, 'card', user, { title: "Updated card title" });
+    await shouldUpdateX(ownCard, 'card', user, { title: 'Updated card title' });
 
     await shouldRemoveX(ownList.cards[2], 'card', user);
   });
@@ -1137,7 +1137,10 @@ describe('board member', () => {
   let memberBoard = data.boards[0];
   let memberBoardList = memberBoard.lists[0];
   let memberBoardListToRemove = memberBoard.lists[1];
+  let memberBoardCard = memberBoardList.cards[0];
+  let memberBoardCardToRemove = memberBoardList.cards[1];
 
+  // Able to read tests
   test('should be able to read private board he is added to as a member', async () => {
 
     let token = data.users[1].tokens[0].token;
@@ -1149,10 +1152,15 @@ describe('board member', () => {
     expect(result.data.getBoard.userId).toBe(toGlobalId('user', data.users[0]._id.toString()));
   });
 
-  test('should NOT be able to delete private board he is added to', async () => {
-    await shouldNotRemoveX(data.boards[0], 'board', data.users[1]);
+  test('should be able to read LIST of private board he is added to as a member', async () => {
+    await shouldGetX(memberBoardList, 'list', member);
   });
 
+  test('should be able to read CARD of private board he is added to as a member', async () => {
+    await shouldGetX(memberBoardCard, 'card', member);
+  });
+
+  // Able to modify data tests
   test('should be able to create LISTs for the private board he is added to', async () => {
     await shouldCreateX('list', member, {
       name: "My new list",
@@ -1175,6 +1183,19 @@ describe('board member', () => {
     let listId = toGlobalId('list', memberBoardList._id);
     await shouldCreateX('card', member, { title: 'New member card', listId: listId });
   });
+
+  test('should be able to remove CARD of the private board he is added as a member', async () => {
+    await shouldRemoveX(memberBoardCardToRemove, 'card', member);
+  });
+
+  test('should be able to update CARD of the private board he is added as a member', async () => {
+    await shouldUpdateX(memberBoardCard, 'card', member, { title: 'Updated card title'});
+  });
+
+  // Should not modify data tests
+  test('should NOT be able to delete private board he is added to', async () => {
+    await shouldNotRemoveX(data.boards[0], 'board', data.users[1]);
+  });
 });
 
 describe('board observer', () => {
@@ -1182,6 +1203,7 @@ describe('board observer', () => {
   let observer = data.users[2];
   let observerBoard = data.boards[0];
   let observerBoardList = observerBoard.lists[0];
+  let observerBoardCard = observerBoardList.cards[0];
 
   test('should be able to read private board he is added to as a observer', async () => {
 
@@ -1194,11 +1216,19 @@ describe('board observer', () => {
     expect(result.data.getBoard.userId).toBe(toGlobalId('user', data.users[0]._id.toString()));
   });
 
+  test('should be able to read LIST of the private board he is added to as a observer', async () => {
+    await shouldGetX(observerBoardList, 'list', observer);
+  });
+
+  test('should be able to read CARD of the private board he is added to as a observer', async () => {
+    await shouldGetX(observerBoardCard, 'card', observer);
+  });
+
+  // Should not be able to modify data tests
   test('should not be able to edit private board he is added to as a observer', async () => {
     await shouldNotUpdateX(data.boards[0], 'board', data.users[2], { name: "Update attempt" });
   });
 
-  // should not be able to delete private board he is added to as a observer
   test('should NOT be able to delete private board he is added to as a observer', async () => {
     await shouldNotRemoveX(data.boards[0], 'board', data.users[2]);
   });
@@ -1210,6 +1240,13 @@ describe('board observer', () => {
     });
   });
 
+  test('should not be able to create LIST for the private board he is added to as a observer', async () => {
+    await shouldNotCreateX('list', observer, {
+      name: 'New list',
+      boardId: toGlobalId('board', observerBoard._id)
+    });
+  });
+
   test('should NOT be able to update LIST of the board he is added to as an observer', async () => {
     // TODO: test response is not easy to read
     await shouldNotUpdateX(observerBoardList, 'list', observer, { name: "List update attempt" });
@@ -1218,6 +1255,14 @@ describe('board observer', () => {
 
   test('should NOT be able to delete LIST of the board he is added to as an observer', async () => {
     await shouldNotRemoveX(observerBoardList, 'list', observer);
+  });
+
+  // TODO: Should not be able to Create card
+  test('should not be able to create CARD for the private board he is added to as a observer', async () => {
+    await shouldNotCreateX('card', observer, {
+      title: 'New card',
+      listId: toGlobalId('list', observerBoardList._id)
+    });
   });
 
   test('should NOT be able to update CARD of the board he is added to as an observer', async () => {
