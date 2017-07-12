@@ -18,7 +18,9 @@ export default new Board({
       default: true
     },
     memberships: {
-      type: Array
+      type: Array,
+      // Memberships should not be edited directly
+      readOnly: true
     },
     lists: {
       relation: 'hasMany'
@@ -68,5 +70,4 @@ export default new Board({
       }
     }
   }
-  // TODO: allow memberships to edit?
 });
