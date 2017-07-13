@@ -4,7 +4,6 @@ class User extends MongoDBModel {}
 
 export default new User({
   isViewer: true,
-  expose: false,
   properties: {
     id: {
       type: 'id'
@@ -16,5 +15,11 @@ export default new User({
       type: Array,
       private: true
     }
-  }
+  },
+  acls: [{
+    allow: false
+  }, {
+    allow: true,
+    actions: 'read'
+  }]
 });
