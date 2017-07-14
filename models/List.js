@@ -23,7 +23,6 @@ export default new List({
   acls: [{
     allow: false
   }, {
-    // Anyone who can read board can read list
     allow: true,
     actions: 'read',
     checkRelation: {
@@ -31,7 +30,6 @@ export default new List({
       action: 'read'
     }
   }, {
-    // anyone who can update board is able to do any action on lists
     allow: true,
     actions: '*',
     roles: '*',
@@ -40,8 +38,6 @@ export default new List({
       action: 'update'
     }
   }, {
-    // If we don't want to allow board members to edit board, e.g. rename it.
-    // We should additionally allow them to modify lists
     allow: true,
     actions: '*',
     roles: '*',

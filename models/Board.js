@@ -19,7 +19,6 @@ export default new Board({
     },
     memberships: {
       type: Array,
-      // Memberships should not be edited directly
       readOnly: true
     },
     lists: {
@@ -69,5 +68,14 @@ export default new Board({
         return { 'memberships': { '$elemMatch': { 'userId': ctx.currentUser._id, role: 'observer' } } }
       }
     }
-  }
+  },
+
+  validations: [{
+    field: 'name',
+    assert: 'required'
+  }, {
+    field: 'name',
+    assert: 'maxLength',
+    max: 50
+  }]
 });
