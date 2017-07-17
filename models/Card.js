@@ -18,9 +18,6 @@ export default new Card({
     },
     list: {
       relation: 'belongsTo'
-    },
-    board: {
-      relation: 'belongsTo'
     }
   },
   acls: [{

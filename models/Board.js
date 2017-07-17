@@ -28,7 +28,6 @@ export default new Board({
       relation: 'belongsTo'
     }
   },
-
   acls: [{
     allow: false
   }, {
@@ -69,7 +68,6 @@ export default new Board({
       }
     }
   },
-
   validations: [{
     field: 'name',
     assert: 'required'
