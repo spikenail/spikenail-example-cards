@@ -24,8 +24,7 @@ import sources from  '../config/sources';
 import data from '../db/data';
 
 // Connection URL
-// Use default datasource
-const url = sources.default.connectionString;
+const url = sources.test.connectionString;
 
 /**
  * Connect to database
