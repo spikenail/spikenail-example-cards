@@ -32,7 +32,6 @@ const url = sources.test.connectionString;
  * @returns {Promise.<void>}
  */
 async function connect() {
-  console.log('connecting to server');
   db = await MongoClient.connect(url);
 }
 
@@ -40,21 +39,14 @@ async function connect() {
  * Truncate current database
  */
 async function clearDatabase() {
-  console.log('clear database');
-
   let collections = await db.listCollections().toArray();
-    console.log('collections', collections);
 
   for (let collection of collections) {
     if (collection.name.startsWith('system.')) {
       continue;
     }
 
-    console.log('col name', collection.name);
-    // Drop collection
-
     await db.dropCollection(collection.name);
-    console.log('dropped:', collection.name);
   }
 }
 
@@ -67,7 +59,6 @@ async function initDatabase() {
     // Insert entries
     let collection = db.collection(collectionName);
     await collection.insertMany(collectionData);
-    console.log('inserted data for', collectionName);
   }
 }
 
@@ -100,8 +91,6 @@ async function getXQuery(name, id, token = '') {
       userId
     }
   }`;
-
-  console.log('getXQuery', query, 'token', token);
 
   // TODO: don't put token in header if not specified
   let res = await request(Spikenail.server)
@@ -170,13 +159,6 @@ async function shouldNotReadBoard(board, user) {
   let result = await readBoard(board, user);
 
   expect(result.data.getBoard).toBeNull();
-}
-
-/**
- * TODO
- */
-function updateX(item, user) {
-  // TODO:
 }
 
 /**
@@ -422,20 +404,23 @@ function buildGetXQuery(item, name) {
 async function shouldNotGetX(item, name, user) {
   let query = buildGetXQuery(item, name);
 
-  console.log('should not get X query ---', query);
-
   let result = await runQuery(query, user);
 
   expect(result.data['get' + capitalizeFirstLetter(name)]).toBe(null);
 }
 
+/**
+ * Should get X
+ *
+ * @param item
+ * @param name
+ * @param user
+ * @returns {Promise.<void>}
+ */
 async function shouldGetX(item, name, user) {
-  // TODO
-  //let query
-}
-
-async function shouldNotReadAll() {
-  // TODO:
+  let query = buildGetXQuery(item, name);
+  let result = await runQuery(query, user);
+  expect(result.data[Object.keys(result.data)[0]].id).not.toBe(null);
 }
 
 /**
@@ -558,8 +543,6 @@ async function testMutationAccessError(name, input) {
     }
   }`;
 
-  console.log(query);
-
   let res = await request(Spikenail.server)
     .post('/graphql')
     // .set('authorization', 'Bearer token-123)
@@ -589,7 +572,6 @@ describe('anonymous role', () => {
   // Able to read tests
   test('should be allowed to read public board by getBoard query', async () => {
     let id = toGlobalId('board', data.boards[1]['_id'].toString());
-    console.log('globlid', id );
 
     let query = `{
       getBoard(id: "${id}") {
@@ -611,7 +593,9 @@ describe('anonymous role', () => {
   });
 
   test('should be allowed to read list of public board by getBoard query', async () => {
-    await shouldGetX(publicList, 'list', null);
+    let checkList = clone(publicList);
+    delete checkList.cards;
+    await shouldGetX(checkList, 'list', null);
   });
 
   test('should be allowed to read card of public board by getBoard query', async () => {
@@ -700,18 +684,10 @@ describe('anonymous role', () => {
     }`;
 
     let result = await runQuery(query, null);
-    console.log('all lists - result', result);
-    console.log('all lists', result.data.viewer.allLists);
     let edges = result.data.viewer.allLists.edges;
-
-    console.log('edges', edges);
-
     let publicBoardIds = data.boards.map(board => toGlobalId('board', board._id));
 
-    console.log('public board ids', publicBoardIds);
-
     for (let edge of edges) {
-      console.log('edge', edge);
       expect(!!~publicBoardIds.indexOf(edge.node.boardId)).toBe(true)
     }
   });
@@ -755,7 +731,6 @@ describe('anonymous role', () => {
     });
 
     for (let edge of edges) {
-      console.log('edge', edge);
       expect(
         !!~publicCardIds.indexOf(fromGlobalId(edge.node.id).id)
       ).toBe(true)
@@ -929,7 +904,9 @@ describe('user role', () => {
   });
 
   test('should be allowed to read LIST of public board by getBoard query', async () => {
-    await shouldGetX(publicList, 'list', user);
+    let checkList = clone(publicList);
+    delete checkList.cards;
+    await shouldGetX(checkList, 'list', user);
   });
 
   test('should be allowed to read CARD of public board by getBoard query', async () => {
@@ -1057,7 +1034,9 @@ describe('board owner', () => {
   });
 
   test('should be able to read LIST of the private board he owns', async () => {
-    await shouldGetX(ownList, 'list', user);
+    let checkList = clone(ownList);
+    delete checkList.cards;
+    await shouldGetX(checkList, 'list', user);
   });
 
   test('should be able to read CARD of the private board he owns', async () => {
@@ -1152,7 +1131,9 @@ describe('board member', () => {
   });
 
   test('should be able to read LIST of private board he is added to as a member', async () => {
-    await shouldGetX(memberBoardList, 'list', member);
+    let checkList = clone(memberBoardList);
+    delete checkList.cards;
+    await shouldGetX(checkList, 'list', member);
   });
 
   test('should be able to read CARD of private board he is added to as a member', async () => {
@@ -1216,7 +1197,9 @@ describe('board observer', () => {
   });
 
   test('should be able to read LIST of the private board he is added to as a observer', async () => {
-    await shouldGetX(observerBoardList, 'list', observer);
+    let checkList = clone(observerBoardList);
+    delete checkList.cards;
+    await shouldGetX(checkList, 'list', observer);
   });
 
   test('should be able to read CARD of the private board he is added to as a observer', async () => {
