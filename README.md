@@ -2,6 +2,8 @@
 
 GraphQL API for Trello-like application built with spikenail framework.
 
+https://medium.com/@igor3489_46897/creating-advanced-graphql-api-quickly-using-spikenail-80ce6fd675ab
+
 ## Installation
 
 ```
