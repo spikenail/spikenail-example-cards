@@ -12,10 +12,10 @@
     "babel-polyfill": "^6.20.0",
     "babel-register": "^6.18.0",
     "graphql-query-builder": "^1.0.7",
-    "graphql-relay": "^0.5.1",
+    "graphql-relay": "^0.5.2",
     "lodash.clone": "^4.5.0",
     "mongodb": "^2.2.27",
-    "spikenail": "^0.3.0",
+    "spikenail": "^0.17.0",
     "stringify-object": "^3.2.0",
     "supertest": "^3.0.0"
   },
